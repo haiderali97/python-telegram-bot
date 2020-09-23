@@ -52,6 +52,11 @@ class TelegramError(Exception):
         return '%s' % (self.message)
 
 
+class MiddlewareReject(TelegramError):
+    def __init__(self):
+        super().__init__('Middleware rejected this update')
+
+
 class Unauthorized(TelegramError):
     pass
 

@@ -30,6 +30,7 @@ from collections import defaultdict
 from queue import Queue, Empty
 
 from telegram import TelegramError, Update
+from telegram.error import MiddlewareReject
 from telegram.ext.handler import Handler
 from telegram.ext.callbackcontext import CallbackContext
 from telegram.utils.deprecate import TelegramDeprecationWarning
@@ -160,6 +161,8 @@ class Dispatcher:
         else:
             self.persistence = None
 
+        self.middlewares = []
+        """List[]: A list of middlewares."""
         self.handlers = {}
         """Dict[:obj:`int`, List[:class:`telegram.ext.Handler`]]: Holds the handlers per group."""
         self.groups = []
@@ -350,6 +353,13 @@ class Dispatcher:
 
         context = None
 
+        # process middlewares
+        for middleware in self.middlewares:
+            try:
+                middleware(update)
+            except MiddlewareReject:
+                return
+
         for group in self.groups:
             try:
                 for handler in self.handlers[group]:
@@ -379,6 +389,19 @@ class Dispatcher:
                     self.logger.exception('An error was raised while processing the update and an '
                                           'uncaught error was raised while handling the error '
                                           'with an error_handler')
+
+    def add_middleware(self, middleware):
+        """Register a middleware.
+
+        Add a callable to be called before an update object is handed off to
+        the  handlers by the dispatcher.
+        If the callable raises a telegram.error.MiddlewareReject exception, the
+        update will be discarded.
+
+        Args:
+            callback (:obj:`callable`): The callback function for this handler.
+        """
+        self.middlewares.append(middleware)
 
     def add_handler(self, handler, group=DEFAULT_GROUP):
         """Register a handler.
