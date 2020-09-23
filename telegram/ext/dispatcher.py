@@ -162,7 +162,7 @@ class Dispatcher:
             self.persistence = None
 
         self.middlewares = []
-        """List[]: A list of middlewares."""
+        """List[:obj:`callable`]: A list of middlewares."""
         self.handlers = {}
         """Dict[:obj:`int`, List[:class:`telegram.ext.Handler`]]: Holds the handlers per group."""
         self.groups = []
@@ -393,13 +393,13 @@ class Dispatcher:
     def add_middleware(self, middleware):
         """Register a middleware.
 
-        Add a callable to be called before an update object is handed off to
-        the  handlers by the dispatcher.
-        If the callable raises a telegram.error.MiddlewareReject exception, the
-        update will be discarded.
+        Add a callable to a list of callables to be executed before
+        handed off to individual handlers.
+        End processing of an update by raising
+        :class:`telegram.error.MiddlewareReject` from the callable.
 
         Args:
-            callback (:obj:`callable`): The callback function for this handler.
+            middleware (:obj:`callable`): A callable.
         """
         self.middlewares.append(middleware)
 
